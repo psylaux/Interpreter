@@ -113,15 +113,15 @@ public class RegexTests {
                 //passing
                 Arguments.of("14 Characters", "thishas14chars", true),
                 Arguments.of("10 Characters", "i<3pancakes!", true),
-                Arguments.of("11 Characters", "i<3pancakes!!", true),
+                Arguments.of("12 Characters", "i<3pancakes!!!", true),
                 Arguments.of("20 Characters", "20202020202020202020", true),
-                Arguments.of("19 Characters", "123456789asbfjdlpcd", true),
+                Arguments.of("18 Characters", "123456789asbfjdlpd", true),
                 //failing
                 Arguments.of("9 Characters", "9MANYchar", false),
                 Arguments.of("0 Characters", "", false),
                 Arguments.of("1 Character", "1", false),
                 Arguments.of("26 Characters", "abcdefghijklmnopqrstuvwxyz", false),
-                Arguments.of("21 characters", "hgjfkdncmskaidpfwp052", false)
+                Arguments.of("15 characters", "idont<3pancakes", false)
         );
     }
 
