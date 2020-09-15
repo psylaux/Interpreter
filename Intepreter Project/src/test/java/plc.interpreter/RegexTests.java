@@ -147,6 +147,77 @@ public class RegexTests {
                 Arguments.of("Space Before", "[ 1, 2, 3]", false),
                 Arguments.of("Trailing Comma", "[1,2,3,]", false)
         );
+    } 
+    
+    @ParameterizedTest
+    @MethodSource
+    public void testIdentifierRegex(String test, String input, boolean success) {
+        test(input, Regex.IDENTIFIER, success);
+    }
+
+    public static Stream<Arguments> testIdentifierRegex() {
+        return Stream.of(
+                //successful
+                Arguments.of("lettersonly", "getName", true),
+                Arguments.of("question&dash", "is-empty?", true),
+                Arguments.of("symbolsonly", "<=>", true),
+                Arguments.of("underscorebegin", "_tester", true),
+                Arguments.of("alphanumeric", "variable47", true),
+                //unsuccessful
+                Arguments.of("numberbegin", "42=life", false),
+                Arguments.of("containscommas", "why,are,there,commas", false),
+                Arguments.of("singleperiod", ".", false),
+                Arguments.of("semicolon", "semi;colon", false),
+                Arguments.of("carrot", "carrot^", false)
+
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource
+    public void testNumberRegex(String test, String input, boolean success) {
+        test(input, Regex.NUMBER, success);
+    }
+
+    public static Stream<Arguments> testNumberRegex() {
+        return Stream.of(
+                //successful
+                Arguments.of("single digit", "1", true),
+                Arguments.of("negativenumber", "-234324", true),
+                Arguments.of("positivenumber", "+35423", true),
+                Arguments.of("decimal", "007.000", true),
+                Arguments.of("lessthan1", "0.5", true),
+                //unsuccessful
+                Arguments.of("trailingperiod", "5.", false),
+                Arguments.of("leadingperiod", ".5", false),
+                Arguments.of("doubleperiod", "....", false),
+                Arguments.of("multiple periods", "123.242.2", false),
+                Arguments.of("positiveafternumber", "1+3", false)
+
+        );
+    }
+    @ParameterizedTest
+    @MethodSource
+    public void testStringRegex(String test, String input, boolean success) {
+        test(input, Regex.STRING, success);
+    }
+
+    public static Stream<Arguments> testStringRegex() {
+        return Stream.of(
+                //successful
+                Arguments.of("emptystringwithquotes", "\"\"", true),
+                Arguments.of("plaintext", "\"HelloWorld\"", true),
+                Arguments.of("newline", "\"Hello,\\nWorld!\"", true),
+                Arguments.of("space", "\"Hello World\"", true),
+                Arguments.of("tab", "\"Hello,\\tWorld!\"", true),
+                //unsuccessful
+                Arguments.of("unterminated", "\"unterminated", false),
+                Arguments.of("slash", "\"invalid\\escape\"", false),
+                Arguments.of("missingquotebegining", "unterminated\"", false),
+                Arguments.of("noquotes", "", false),
+                Arguments.of("stringnoquotes", "abc", false)
+
+        );
     }
 
     /**
