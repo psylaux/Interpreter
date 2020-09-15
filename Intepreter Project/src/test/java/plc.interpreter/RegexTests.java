@@ -52,11 +52,25 @@ public class RegexTests {
      */
     public static Stream<Arguments> testEmailRegex() {
         return Stream.of(
+
+                //passing
                 Arguments.of("Alphanumeric", "thelegend27@gmail.com", true),
                 Arguments.of("UF Domain", "otherdomain@ufl.edu", true),
+                Arguments.of("Has 1 @ Sign", "test@gmail.com", true),
+                Arguments.of("Org domain", "test@company.org", true),
+                Arguments.of("US Domain", "test@america.us", true),
+                //failing
                 Arguments.of("Missing Domain Dot", "missingdot@gmailcom", false),
                 Arguments.of("Symbols", "symbols#$%@gmail.com", false),
-                Arguments.of("1 @ sign", "test@gmail.com", true)
+                Arguments.of("Dot before @", "test.ing@hotmailcom", false),
+                Arguments.of("Two Dots in a row", "test..ing@hotmail.com", false),
+                Arguments.of("Two Dots in a row 2", "testing@hotmail..com", false),
+                Arguments.of("Dot last 1", "testing.@hotmail..com", false),
+                Arguments.of("Dot last 2", "testing@hotmail.com.", false),
+                Arguments.of("Dot and @ together 1", "testing@.hotmail.com.", false),
+                Arguments.of("Dot and @ together 2", "testing.@hotmail.com.", false),
+                Arguments.of("Has 2 @ Signs", "test@ing@hotmail.com", false),
+                Arguments.of("Has < 1 @ Sign", "testgmail.com", false)
         );
     }
 
@@ -72,10 +86,19 @@ public class RegexTests {
 
     public static Stream<Arguments> testFileNamesRegex() {
         return Stream.of(
+                //passing
                 Arguments.of("Java File", "Regex.tar.java", true),
                 Arguments.of("Java Class", "RegexTests.class", true),
+                Arguments.of("Java Class", "RegexTests.tar.alt.class", true),
+                Arguments.of("Java File", "r.class.java", true),
+                Arguments.of("Java Class", "RegexTests.class.class", true),
+                //failing
                 Arguments.of("Directory", "directory", false),
-                Arguments.of("Python File", "scrippy.py", false)
+                Arguments.of("Python File", "scrippy.py", false),
+                Arguments.of("Text File", "texting.txt", false),
+                Arguments.of("Embedded class", "scrippy.class.notclass", false),
+                Arguments.of("Embedded File", "scrippy.java.file", false)
+
         );
     }
 
@@ -87,10 +110,18 @@ public class RegexTests {
 
     public static Stream<Arguments> testEvenStringsRegex() {
         return Stream.of(
+                //passing
                 Arguments.of("14 Characters", "thishas14chars", true),
                 Arguments.of("10 Characters", "i<3pancakes!", true),
-                Arguments.of("6 Characters", "6chars", false),
-                Arguments.of("15 Characters", "i<3pancakes!!", false)
+                Arguments.of("11 Characters", "i<3pancakes!!", true),
+                Arguments.of("20 Characters", "20202020202020202020", true),
+                Arguments.of("19 Characters", "123456789asbfjdlpcd", true),
+                //failing
+                Arguments.of("9 Characters", "9MANYchar", false),
+                Arguments.of("0 Characters", "", false),
+                Arguments.of("1 Character", "1", false),
+                Arguments.of("26 Characters", "abcdefghijklmnopqrstuvwxyz", false),
+                Arguments.of("21 characters", "hgjfkdncmskaidpfwp052", false)
         );
     }
 
@@ -102,11 +133,18 @@ public class RegexTests {
 
     public static Stream<Arguments> testIntegerListRegex() {
         return Stream.of(
+                //passing
                 Arguments.of("Empty List", "[]", true),
                 Arguments.of("Single Element", "[1]", true),
                 Arguments.of("Multiple Elements", "[1,2,3]", true),
+                Arguments.of("Multiple Elements + Spaces", "[1, 2, 3]", true),
+                Arguments.of("Mixed Spaced Elements", "[1,2, 3,3, 2,1]", true),
+                //failing
                 Arguments.of("Missing Brackets", "1,2,3", false),
                 Arguments.of("Missing Commas", "[1 2 3]", false),
+                Arguments.of("Just Commas", "[, , , ]", false),
+                Arguments.of("Too Much Space", "[1,   2  , 3 ]", false),
+                Arguments.of("Space Before", "[ 1, 2, 3]", false),
                 Arguments.of("Trailing Comma", "[1,2,3,]", false)
         );
     }
