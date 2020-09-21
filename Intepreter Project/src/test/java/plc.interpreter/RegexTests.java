@@ -29,27 +29,12 @@ public class RegexTests {
      * which describes what that test should be testing - this is visible in
      * IntelliJ when running the tests.
      */
+
     @ParameterizedTest
     @MethodSource
     public void testEmailRegex(String test, String input, boolean success) {
-/*
-       Stream<Arguments> arguments = testEmailRegex();
-        Stream.iterate(0, n -> n + 1)
-                .limit(arguments.count())
-                .forEach(x -> System.out.println(x));
-*/
         test(input, Regex.EMAIL, success);
-
-
-
     }
-
-    /**
-     * This is the factory method providing test cases for the parameterized
-     * test above - note that it is static, takes no arguments, and has the same
-     * name as the test. The {@link Arguments} object contains the arguments for
-     * each test to be passed to the function above
-     */
     public static Stream<Arguments> testEmailRegex() {
         return Stream.of(
 
@@ -59,12 +44,11 @@ public class RegexTests {
                 Arguments.of("Has 1 @ Sign", "test@gmail.com", true),
                 Arguments.of("Org domain", "test@company.org", true),
                 Arguments.of("US Domain", "test@america.us", true),
+                Arguments.of("Dashdomain", "test@NORTH-america.us", true),
                 //failing
                 Arguments.of("Missing Domain Dot", "missingdot@gmailcom", false),
                 Arguments.of("Symbols", "symbols#$%@gmail.com", false),
                 Arguments.of("Dot before @", "test.ing@hotmailcom", false),
-                Arguments.of("Two Dots in a row", "test..ing@hotmail.com", false),
-                Arguments.of("Two Dots in a row 2", "testing@hotmail..com", false),
                 Arguments.of("Dot last 1", "testing.@hotmail..com", false),
                 Arguments.of("Dot last 2", "testing@hotmail.com.", false),
                 Arguments.of("Dot and @ together 1", "testing@.hotmail.com.", false),
@@ -92,12 +76,15 @@ public class RegexTests {
                 Arguments.of("Java Class", "RegexTests.tar.alt.class", true),
                 Arguments.of("Java File", "r.class.java", true),
                 Arguments.of("Java Class", "RegexTests.class.class", true),
+                Arguments.of("dash", "Regex-Tests.class.class", true),
                 //failing
                 Arguments.of("Directory", "directory", false),
                 Arguments.of("Python File", "scrippy.py", false),
                 Arguments.of("Text File", "texting.txt", false),
-                Arguments.of("Embedded class", "scrippy.class.notclass", false),
-                Arguments.of("Embedded File", "scrippy.java.file", false)
+                Arguments.of("Embedded class", "scrippy.class.not", false),
+                Arguments.of("Embedded File", "scrippy.java.file", false),
+                Arguments.of("dashes", "scrippy-java-file", false),
+                Arguments.of("dashes", ".class", false)
 
         );
     }
@@ -144,11 +131,11 @@ public class RegexTests {
                 Arguments.of("Missing Commas", "[1 2 3]", false),
                 Arguments.of("Just Commas", "[, , , ]", false),
                 Arguments.of("Too Much Space", "[1,   2  , 3 ]", false),
+                Arguments.of("space in the front", "[ 1,2,3]", false),
                 Arguments.of("Space Before", "[ 1, 2, 3]", false),
                 Arguments.of("Trailing Comma", "[1,2,3,]", false)
         );
-    } 
-    
+    }
     @ParameterizedTest
     @MethodSource
     public void testIdentifierRegex(String test, String input, boolean success) {
@@ -161,14 +148,20 @@ public class RegexTests {
                 Arguments.of("lettersonly", "getName", true),
                 Arguments.of("question&dash", "is-empty?", true),
                 Arguments.of("symbolsonly", "<=>", true),
+                Arguments.of("allthesymbols", "<>=", true),
                 Arguments.of("underscorebegin", "_tester", true),
                 Arguments.of("alphanumeric", "variable47", true),
+
                 //unsuccessful
-                Arguments.of("numberbegin", "42=life", false),
+
+                Arguments.of("ampersand", "test&", false),
                 Arguments.of("containscommas", "why,are,there,commas", false),
                 Arguments.of("singleperiod", ".", false),
-                Arguments.of("semicolon", "semi;colon", false),
-                Arguments.of("carrot", "carrot^", false)
+                Arguments.of("numberbegin", "42=life", false),
+                Arguments.of("semi", "semi;colon", false)
+
+
+
 
         );
     }
@@ -187,12 +180,15 @@ public class RegexTests {
                 Arguments.of("positivenumber", "+35423", true),
                 Arguments.of("decimal", "007.000", true),
                 Arguments.of("lessthan1", "0.5", true),
+                Arguments.of("bigNumber", "16432481254712548754971", true),
                 //unsuccessful
                 Arguments.of("trailingperiod", "5.", false),
                 Arguments.of("leadingperiod", ".5", false),
                 Arguments.of("doubleperiod", "....", false),
                 Arguments.of("multiple periods", "123.242.2", false),
-                Arguments.of("positiveafternumber", "1+3", false)
+                Arguments.of("positiveafternumber", "1+3", false),
+                Arguments.of("letters", "abc", false),
+                Arguments.of("symbols", "!!!", false)
 
         );
     }
@@ -210,15 +206,18 @@ public class RegexTests {
                 Arguments.of("newline", "\"Hello,\\nWorld!\"", true),
                 Arguments.of("space", "\"Hello World\"", true),
                 Arguments.of("tab", "\"Hello,\\tWorld!\"", true),
+                Arguments.of("r", "\"Hello,\\rWorld!\"", true),
                 //unsuccessful
                 Arguments.of("unterminated", "\"unterminated", false),
                 Arguments.of("slash", "\"invalid\\escape\"", false),
                 Arguments.of("missingquotebegining", "unterminated\"", false),
                 Arguments.of("noquotes", "", false),
+                Arguments.of("singlequotes", "\'test\'", false),
                 Arguments.of("stringnoquotes", "abc", false)
 
         );
     }
+
 
     /**
      * Asserts that the input matches the given pattern and returns the matcher
