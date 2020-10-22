@@ -22,9 +22,9 @@ import java.util.List;
  */
 public final class Lexer {
 
-     final CharStream chars;
+    final CharStream chars;
 
-     Lexer(String input) {
+    Lexer(String input) {
         chars = new CharStream(input);
     }
 
@@ -40,103 +40,69 @@ public final class Lexer {
      * of the input is reached, returning the list of tokens lexed. This should
      * also handle skipping whitespace.
      */
-     List<Token> lex() throws ParseException {
+    List<Token> lex() throws ParseException {
 
-            List<Token> result = new ArrayList<Token>();
-          //  Token token = lexToken();
-            //System.out.println(token);
-           // result.add(token);
-            while(chars.index != chars.input.length()){
-                if(chars.get(0) == ' ' ){
-                    chars.advance();
-                    chars.reset();
-                }
-                else if(chars.get(0) == ' ' && chars.input.length() == 1){
-                    return result;
-                }
-               // System.out.println(chars.get(0));
-                Token temp = lexToken();
-                result.add(temp);
-
+        List<Token> result = new ArrayList<Token>();
+        //  Token token = lexToken();
+        //System.out.println(token);
+        // result.add(token);
+        while(chars.index != chars.input.length()){
+            if(chars.get(0) == ' ' ){
+                chars.advance();
+                chars.reset();
             }
+            else if(chars.get(0) == ' ' && chars.input.length() == 1){
+                return result;
+            }
+            // System.out.println(chars.get(0));
+            result.add(lexToken());
+
+        }
         return result;
     }
 
-    /**
-     * Lexes the next token. It may be helpful to have this call other methods,
-     * such as {@code lexIdentifier()} or {@code lexNumber()}, based on the next
-     * character(s).
-     *
-     * Additionally, here is an example of lexing a character literal (not used
-     * in this assignment) using the peek/match methods below.
-     *
-     * <pre>
-     * {@code
-     *     private plc.interpreter.Token lexCharacter() {
-     *         if (!match("\'")) {
-     *             //Your lexer should prevent this from happening, as it should
-     *             // only try to lex a character literal if the next character
-     *             // begins a character literal.
-     *             //Additionally, the index being passed back is a 'ballpark'
-     *             // value. If we were doing proper diagnostics, we would want
-     *             // to provide a range covering the entire error. It's really
-     *             // only for debugging / proof of concept.
-     *             throw new ParseException("Next character does not begin a character literal.", chars.index);
-     *         }
-     *         if (!chars.has(0) || match("\'")) {
-     *             throw new ParseException("Empty character literal.",  chars.index);
-     *         } else if (match("\\")) {
-     *             //lex escape characters...
-     *         } else {
-     *             chars.advance();
-     *         }
-     *         if (!match("\'")) {
-     *             throw new ParseException("Unterminated character literal.", chars.index);
-     *         }
-     *         return chars.emit(Token.Type.CHARACTER);
-     *     }
-     * }
-     * </pre>
-     */
-     Token lexToken() throws ParseException {
-         Token token;
-         if(peek("[+-0-9]") || chars.get(0) >= '0' && chars.get(0) <= '9'){ // the next character is a + or - or a digit
-             chars.index++;
-             if(peek("[0-9]") || chars.get(-1) >= '0' && chars.get(-1) <= '9'){ // the next next character is a digit or the next character is a digit
-                 chars.index--;
-                 token = lexNumber();
-             }else {
-                 chars.index--;
-                 token = lexIdentifier();
-             }
 
-             return token;
-         }
-         else if(peek("[_a-zA-Z\\:\\!\\?\\<\\>\\=\\.]")){
-             token = lexIdentifier();
-             return token;
-         }else if(peek("[()#.]")){
-             token = lexOperator();
-             return token;
-         }
-         else{
-                 throw new ParseException("Unterminated character literal.", chars.index);
-             }
-         }
+    Token lexToken() throws ParseException {
 
+        Token token;
+        if(peek("[+-0-9]") || chars.get(0) >= '0' && chars.get(0) <= '9'){ // the next character is a + or - or a digit
+            chars.index++;
+            if(peek("[0-9]") || chars.get(-1) >= '0' && chars.get(-1) <= '9'){ // the next next character is a digit or the next character is a digit
+                chars.index--;
+                token = lexNumber();
+            }else {
+                chars.index--;
+                token = lexIdentifier();
+            }
 
+            return token;
+        }
+        else if(peek("[_a-zA-Z\\:\\!\\?\\<\\>\\=\\.]")){
+            token = lexIdentifier();
+            return token;
+        }else if(peek("[()#.]")){
+            token = lexOperator();
+            return token;
+        } else if (peek("\"")) {
+            token = lexString();
+            return token;
+        }
+        else{
+            throw new ParseException("Unterminated character literal.", chars.index);
+        }
+    }
 
-     Token lexIdentifier() {
+    Token lexIdentifier() {
+
         if(match("[+-_a-zA-Z\\:\\!\\?\\<\\>\\=\\.]")){
             while(match("[._a-zA-Z-\\:\\!\\?\\<\\>\\=\\.]")){
             }
             return chars.emit(Token.Type.IDENTIFIER);
         }
-         throw new ParseException("Invalid Identifier", chars.index);
+        throw new ParseException("Invalid Identifier", chars.index);
     }
 
-     Token lexNumber() {
-
+    Token lexNumber() {
         if(match("[0-9-+]")){
             while (match("[0-9.]")) {
             }
@@ -151,86 +117,125 @@ public final class Lexer {
         }
 
     }
-     Token lexString() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+
+    Token lexString() throws ParseException {
+
+        if (match("\""))  {
+            //exception
+            while (true) {
+                if(match("([a-zA-Z]|[^\\\\\\\"])")) {
+                    continue;
+                } else if (match("(\\\\)")) {
+                    if (match("[\\\\\"bnrt']")){
+                        continue;
+                    }
+                    else{
+                        throw new ParseException("Invalid Escape Sequence", chars.index);
+                    }
+                } else if(match("[\\\\\"]{1}")) {
+                    break;
+                } else {
+                    throw new ParseException("Unterminated String", chars.index);
+                }
+            }
+            return chars.emit(Token.Type.STRING);
+
+        }
+        else {
+            throw new ParseException("Invalid String", chars.index);
+        }
+
     }
+
     Token lexOperator() throws ParseException {
-        if(match("[()#.]")){
+
+        if (match("[()#.]")) {
             return chars.emit(Token.Type.OPERATOR);
-        }else {
+        }
+        else {
+            System.out.println("Correctly wrong");
             throw new ParseException("Invalid Operator", chars.index);
         }
+
     }
+
 
     /**
      * Returns true if the next sequence of characters match the given patterns,
      * which should be a regex. For example, {@code peek("a", "b", "c")} would
      * return true for the sequence {@code 'a', 'b', 'c'}
      */
-     boolean peek(String... patterns) {
-         boolean matches = false;
+    boolean peek(String... patterns) {
+        boolean matches = false;
 
-         int peekIndex = 0;
+        int peekIndex = 0;
 
-             for(String patString : patterns){
-                 Pattern pattern = Pattern.compile(patString);
-                     Matcher matcher = pattern.matcher(chars.input.valueOf(chars.get(peekIndex)));
+        for(String patString : patterns){
+            Pattern pattern = Pattern.compile(patString);
+            Matcher matcher = pattern.matcher(chars.input.valueOf(chars.get(peekIndex)));
+            matches = matcher.matches();
+            if(matches == false){
+                return matches;
+            }
+            if(chars.has(peekIndex+1)){
+                peekIndex++;
+            }
+        }
 
-                     matches = matcher.matches();
-                     if(matches == false){
-                         return matches;
-                     }
-                    if(chars.has(peekIndex+1)){
-                        peekIndex++;
-                    }
-             }
-             return matches;
+        return matches;
+
     }
 
     /**
      * Returns true in the same way as peek, but also advances the CharStream to
      * if the characters matched.
      */
-     boolean match(String... patterns) {
-         boolean matches = false;
-         for(String patString : patterns){
-             Pattern pattern = Pattern.compile(patString);
-             if (chars.has(0) == false){
-                 break;
-             }
+    boolean match(String... patterns) {
+        boolean matches = false;
+        String check = chars.input.valueOf(chars.get(0));
 
-             Matcher matcher = pattern.matcher(chars.input.valueOf(chars.get(0)));
+        for(String patString : patterns){
+            Pattern pattern = Pattern.compile(patString);
+            if (chars.has(0) == false) {
+                break;
+            }
+            Matcher matcher = pattern.matcher(chars.input.valueOf(chars.get(0)));
+            matches = matcher.matches();
+            if(matches == false && chars.input.length() > patterns.length){
 
-             matches = matcher.matches();
-             if(matches == false && chars.input.length() > patterns.length){
-                 return matches;
-             }else if(matches == false){
-                 chars.index = chars.index-chars.length;
-                 return matches;
-             }
-             if(matches == true && chars.input.length() < patterns.length && chars.has(1) == false){
+                return matches;
+            }else if(matches == false){
+                chars.index = chars.index-chars.length;
+                return matches;
+            }
+            if(matches == true && chars.input.length() < patterns.length && chars.has(1) == false){
                 continue;
-             } else if(matches == true && chars.input.length() < patterns.length ){
-                 continue;
-             } else if(matches == true){
-                 chars.advance();
-             }
-         }
-         return matches;
+            } else if(matches == true && chars.input.length() < patterns.length ){
+                continue;
+            } else if(matches == true){
+                chars.advance();
+
+            }
+        }
+
+        return matches;
     }
+
+
 
     /**
      * This is basically a sequence of characters. The index is used to maintain
      * where in the input string the lexer currently is, and the builder
      * accumulates characters into the literal value for the next token.
      */
-     static final class CharStream {
+    static final class CharStream {
 
-         final String input; // the string being lexed
+        final String input; // the string being lexed
 
-         int index = 0; // start
-         int length = 0; // current or offset
-         CharStream(String input) {
+        int index = 0; // start
+        int length = 0; // current or offset
+
+        CharStream(String input) {
             this.input = input;
         }
 
@@ -247,13 +252,13 @@ public final class Lexer {
          * Gets the character at index + offset.
          */
         public char get(int offset) {
-                if(has(offset)){
-                    return input.charAt(index+offset);
-                }else{
-                    System.out.println("GET FAILURE WITH INDEX: " + index);
-                    System.out.println("string length: "+ input.length());
-                    return ' ';
-                }
+            if(has(offset)){
+                return input.charAt(index+offset);
+            }else {
+                System.out.println("GET FAILURE WITH INDEX: " + index);
+                System.out.println("string length: "+ input.length());
+                return ' ';
+            }
         }
 
         /**
@@ -280,8 +285,13 @@ public final class Lexer {
         public Token emit(Token.Type type) {
             String text = input.substring(index-length,index);
             Token token = new Token(type,text,index-length);
+            System.out.println("Token = "+token.getLiteral());
             reset();
             return token;
+        }
+
+        public boolean isAtEnd() {
+            return index > input.length();
         }
 
     }
