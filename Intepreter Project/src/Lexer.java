@@ -172,7 +172,32 @@ public final class Lexer {
      * the character is invalid a {@link ParseException} should be thrown.
      */
     Token lexString() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+
+        if (match("\""))  {
+            //exception
+            while (true) {
+                if(match("([a-zA-Z]|[^\\\\\\\"])")) {
+                    continue;
+                } else if (match("(\\\\)")) {
+                    if (match("[\\\\\"bnrt']")){
+                        continue;
+                    }
+                    else{
+                        throw new ParseException("Invalid Escape Sequence", chars.index);
+                    }
+                } else if(match("[\\\\\"]{1}")) {
+                    break;
+                } else {
+                    throw new ParseException("Unterminated String", chars.index);
+                }
+            }
+            return chars.emit(Token.Type.STRING);
+
+        }
+        else {
+            throw new ParseException("Invalid String", chars.index);
+        }
+
     }
 
     /**
@@ -183,7 +208,21 @@ public final class Lexer {
      * unknown characters.
      */
     Token lexOperator() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+
+        if (match("[()#.]")) {
+            return chars.emit(Token.Type.OPERATOR);
+        }
+        else if (match("[!=]")){
+            if (match("[=]")){
+                return chars.emit(Token.Type.OPERATOR);
+            }
+            else {
+                throw new plc.interpreter.ParseException("Invalid Equality Operator", chars.index);
+            }
+        }
+        else {
+            throw new plc.interpreter.ParseException("Invalid Operator", chars.index);
+        }
     }
 
     /**
@@ -219,7 +258,7 @@ public final class Lexer {
      * where in the input string the lexer currently is, and the builder
      * accumulates characters into the literal value for the next token.
      */
-     public static final class CharStream {
+    public static final class CharStream {
 
         final String input;
         int index = 0;
