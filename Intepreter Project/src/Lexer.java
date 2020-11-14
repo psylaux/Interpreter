@@ -179,11 +179,11 @@ public final class Lexer {
                 if(match("([a-zA-Z]|[^\\\\\\\"])")) {
                     continue;
                 } else if (match("(\\\\)")) {
-                    if (match("[\\\\\"bnrt']")){
+                    if (match("[^\\\"]")) {
                         continue;
                     }
                     else{
-                        throw new ParseException("Invalid Escape Sequence", chars.index);
+                        throw new ParseException("Invalid Sequence", chars.index);
                     }
                 } else if(match("[\\\\\"]{1}")) {
                     break;
@@ -209,16 +209,14 @@ public final class Lexer {
      */
     Token lexOperator() throws ParseException {
 
-        if (match("[()#.]")) {
+        if (match("[^!=]\\S*")) {
             return chars.emit(Token.Type.OPERATOR);
         }
         else if (match("[!=]")){
-            if (match("[=]")){
-                return chars.emit(Token.Type.OPERATOR);
+            if (peek("[=]")){
+                match("[=]");
             }
-            else {
-                throw new plc.interpreter.ParseException("Invalid Equality Operator", chars.index);
-            }
+            return chars.emit(Token.Type.OPERATOR);
         }
         else {
             throw new plc.interpreter.ParseException("Invalid Operator", chars.index);
