@@ -143,8 +143,9 @@ public final class Parser {
             tokens.advance();
         }
         tokens.advance(); //ELSE
-        while(!tokens.get(0).toString().equals("ELSE")) {
+        while(!tokens.get(0).toString().equals("END")) {
             elseStatements.add(parseStatement());
+            tokens.advance();
         }
         tokens.advance(); //;
         return new Ast.Statement.If(condition, thenStatements, elseStatements);
