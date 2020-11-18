@@ -61,12 +61,12 @@ public final class Parser {
             }
             return parseAssignmentStatement();
         }else if(peek("LET")){
-           return parseDeclarationStatement();
+            return parseDeclarationStatement();
         }
         else if(peek("IF")){
             return parseIfStatement();
         }else if(peek("WHILE")){
-             return parseWhileStatement();
+            return parseWhileStatement();
         }else return parseExpressionStatement();
     }
 
@@ -85,7 +85,28 @@ public final class Parser {
      * called if the next tokens start a declaration statement, aka {@code let}.
      */
     public Ast.Statement.Declaration parseDeclarationStatement() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+
+        //LET n : INTEGER = 1;
+        tokens.advance(); //LET
+
+        String name = tokens.get(0).getLiteral();
+
+        tokens.advance(); //name
+        tokens.advance(); // :
+
+        String type = tokens.get(0).getLiteral();
+
+        tokens.advance(); // type
+
+        if (!tokens.toString().equals(";")) {
+            tokens.advance(); //=
+            String expression = tokens.get(0).getLiteral();
+            tokens.advance(); //expression
+            tokens.advance(); //;
+        }
+        return new Ast.Statement.Declaration(name, type, Optional.empty());
+
+
     }
 
     /**
@@ -94,7 +115,14 @@ public final class Parser {
      * {@code identifier} followed by {@code =}.
      */
     public Ast.Statement.Assignment parseAssignmentStatement() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+
+        //n = n*2
+        String name = tokens.get(0).getLiteral();
+
+        tokens.advance();
+        tokens.advance();
+
+        return new Ast.Statement.Assignment(name, parseExpression());
     }
 
     /**
@@ -102,7 +130,25 @@ public final class Parser {
      * if the next tokens start an if statement, aka {@code if}.
      */
     public Ast.Statement.If parseIfStatement() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+
+        List<Ast.Statement> thenStatements = new ArrayList<Ast.Statement>();
+        List<Ast.Statement> elseStatements = new ArrayList<Ast.Statement>();
+
+        tokens.advance(); //IF
+        Ast.Expression condition = parseExpression();
+        tokens.advance(); //expression
+        tokens.advance(); //THEN
+        while(!tokens.get(0).toString().equals("ELSE")) {
+            thenStatements.add(parseStatement());
+            tokens.advance();
+        }
+        tokens.advance(); //ELSE
+        while(!tokens.get(0).toString().equals("ELSE")) {
+            elseStatements.add(parseStatement());
+        }
+        tokens.advance(); //;
+        return new Ast.Statement.If(condition, thenStatements, elseStatements);
+
     }
 
     /**
@@ -110,7 +156,19 @@ public final class Parser {
      * called if the next tokens start a while statement, aka {@code while}.
      */
     public Ast.Statement.While parseWhileStatement() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+        List<Ast.Statement> statements = new ArrayList<Ast.Statement>();
+
+        tokens.advance(); //WHILE
+        Ast.Expression condition = parseExpression();
+        tokens.advance(); //expression
+        tokens.advance(); //DO
+        while(!tokens.get(0).toString().equals("END")) {
+            statements.add(parseStatement());
+            tokens.advance();
+        }
+        tokens.advance(); //;
+        return new Ast.Statement.While(condition, statements);
+
     }
 
     /**
@@ -287,8 +345,8 @@ public final class Parser {
      */
     public Ast.Expression parsePrimaryExpression() throws ParseException {
         if(peek(Token.Type.DECIMAL)){
-                tokens.advance();
-                return new Ast.Expression.Literal(new BigDecimal(tokens.get(-1).getLiteral()));
+            tokens.advance();
+            return new Ast.Expression.Literal(new BigDecimal(tokens.get(-1).getLiteral()));
         }else if(peek(Token.Type.INTEGER)){
             tokens.advance();
             return new Ast.Expression.Literal(new BigInteger(tokens.get(-1).getLiteral()));
@@ -300,7 +358,7 @@ public final class Parser {
         }else if(peek(Token.Type.IDENTIFIER) && !peek("TRUE") && !peek("FALSE")){
             tokens.advance();
             Token ident = tokens.get(-1);
-             if(peek("(")){
+            if(peek("(")){
                 tokens.advance();
                 List<Ast.Expression> args = new ArrayList<Ast.Expression>();
                 while(!peek(")")){
