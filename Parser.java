@@ -163,7 +163,7 @@ public final class Parser {
             List<Ast.Statement> elseStatements = new ArrayList<Ast.Statement>();
             boolean elseconfirmed = false;
             while(!peek("END")){
-                if(tokens.get(0).getLiteral() == "ELSE"){
+                if(tokens.get(0).getLiteral().equals("ELSE")){
                     elseconfirmed = true;
                     tokens.advance();
                 }
@@ -200,7 +200,7 @@ public final class Parser {
                 Ast.Statement state = parseStatement();
                 statements.add(state);
                 tokens.advance();
-                if(tokens.get(0).getLiteral() == ";"){
+                if(tokens.get(0).getLiteral().equals(";")){
                     tokens.advance();
                 }
 
