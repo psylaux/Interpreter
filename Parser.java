@@ -41,9 +41,13 @@ public final class Parser {
 
         List<Ast.Statement> statements = new ArrayList<Ast.Statement>();
         while(tokens.has(0)){
-
+            if(tokens.get(0).getLiteral().equals(";")){
+                tokens.advance();
+                break;
+            }
             statements.add(parseStatement());
             tokens.advance();
+
 
 
         }
