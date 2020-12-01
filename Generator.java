@@ -36,7 +36,7 @@ public final class Generator implements Ast.Visitor<Void> {
         newline(1);
         print("public static void main(String[] args) {");
         for(int i = 0; i < ast.getStatements().size(); i++){
-            newline(2);
+           newline(2);
             visit(ast.getStatements().get(i));
         }
         newline(1);
@@ -53,7 +53,7 @@ public final class Generator implements Ast.Visitor<Void> {
     @Override
     public Void visit(Ast.Statement.Expression ast) {
         visit(ast.getExpression());
-        print(";");
+//        print(";");
         return null;
     }
 
@@ -69,25 +69,46 @@ public final class Generator implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Statement.Assignment ast) {
-
-        // TODO:  Generate Java to handle Assignment node.
-
+        print(ast.getName(), " ","="," ",ast.getExpression());
+        print(";");
         return null;
     }
 
     @Override
     public Void visit(Ast.Statement.If ast) {
-
-        // TODO:  Generate Java to handle If node.
-
+        print("if (");
+        visit(ast.getCondition());
+        print(") {");
+        newline(3);
+        if (ast.getThenStatements().size() > 0) {
+                visit(ast.getThenStatements().get(0));
+            for(int i = 1; i < ast.getThenStatements().size()-1; i++) {
+                visit(ast.getThenStatements().get(i));
+            }
+        } else { print("}");}
+        if (ast.getElseStatements().size() > 0) {
+            for(int i = 0; i < ast.getElseStatements().size(); i++) {
+                visit(ast.getElseStatements().get(i));
+            }
+        }
+        print(";");
+        newline(2);
+        print("}");
         return null;
     }
 
     @Override
     public Void visit(Ast.Statement.While ast) {
-
-        // TODO:  Generate Java to handle While node.
-
+        print("while (");
+        visit(ast.getCondition());
+        print(") {");
+        for (int i = 0; i < ast.getStatements().size(); i++) {
+            newline(3);
+            visit(ast.getStatements().get(i));
+            print(";");
+        }
+        newline(2);
+        print("}");
         return null;
     }
 
@@ -104,7 +125,6 @@ public final class Generator implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Expression.Group ast) {
-
         print("(");
         visit(ast.getExpression());
         print(")");
@@ -131,7 +151,7 @@ public final class Generator implements Ast.Visitor<Void> {
     @Override
     public Void visit(Ast.Expression.Function ast) {
 
-       print(ast.getName(),"(");
+        print(ast.getName(),"(");
         for(int i = 0; i < ast.getArguments().size(); i++){
             visit(ast.getArguments().get(i));
         }
