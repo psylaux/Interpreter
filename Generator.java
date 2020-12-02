@@ -5,7 +5,7 @@ import java.io.PrintWriter;
 public final class Generator implements Ast.Visitor<Void> {
 
     private final PrintWriter writer;
-    private int indent = 0;
+    private int indent = 2;
 
     public Generator(PrintWriter writer) {
         this.writer = writer;
@@ -53,7 +53,7 @@ public final class Generator implements Ast.Visitor<Void> {
     @Override
     public Void visit(Ast.Statement.Expression ast) {
         visit(ast.getExpression());
-//        print(";");
+        print(";");
         return null;
     }
 
@@ -77,22 +77,32 @@ public final class Generator implements Ast.Visitor<Void> {
     @Override
     public Void visit(Ast.Statement.If ast) {
         print("if (");
-        visit(ast.getCondition());
+        print(ast.getCondition());
         print(") {");
-        newline(3);
         if (ast.getThenStatements().size() > 0) {
-                visit(ast.getThenStatements().get(0));
-            for(int i = 1; i < ast.getThenStatements().size()-1; i++) {
-                visit(ast.getThenStatements().get(i));
+            ++indent;
+            newline(indent);
+            print(ast.getThenStatements().get(0));
+            for(int i = 1; i < ast.getThenStatements().size(); i++) {
+                if (i != ast.getThenStatements().size()-1) {
+                    print(ast.getThenStatements().get(i));
+                    newline(indent);
+                }
             }
         } else { print("}");}
-        if (ast.getElseStatements().size() > 0) {
-            for(int i = 0; i < ast.getElseStatements().size(); i++) {
-                visit(ast.getElseStatements().get(i));
+        if (!ast.getElseStatements().isEmpty()) {
+            newline(--indent);
+            print("} else {");
+            newline(++indent);
+            print(ast.getElseStatements().get(0));
+            for(int i = 1; i < ast.getElseStatements().size(); i++) {
+                if (i != ast.getElseStatements().size()-1) {
+                    print(ast.getElseStatements().get(i));
+                    newline(++indent);
+                }
             }
         }
-        print(";");
-        newline(2);
+        newline(--indent);
         print("}");
         return null;
     }
@@ -105,7 +115,6 @@ public final class Generator implements Ast.Visitor<Void> {
         for (int i = 0; i < ast.getStatements().size(); i++) {
             newline(3);
             visit(ast.getStatements().get(i));
-            print(";");
         }
         newline(2);
         print("}");
