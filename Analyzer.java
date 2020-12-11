@@ -2,6 +2,7 @@ package plc.compiler;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -137,7 +138,7 @@ public final class Analyzer implements Ast.Visitor<Ast> {
                 return new Ast.Expression.Binary(Stdlib.Type.INTEGER,ast.getOperator(),left,right);
             }else if((left.getType() == Stdlib.Type.DECIMAL && right.getType() == Stdlib.Type.INTEGER) ||(left.getType() == Stdlib.Type.INTEGER && right.getType() == Stdlib.Type.DECIMAL) || (left.getType() == Stdlib.Type.DECIMAL && right.getType() == Stdlib.Type.DECIMAL)){
                 return new Ast.Expression.Binary(Stdlib.Type.DECIMAL, ast.getOperator(), left,right);
-            }else throw new AnalysisException("Invalid dash operation");
+            }else throw new AnalysisException("Invalid divison operation");
         }else throw new AnalysisException("Invalid binary expression");
     }
 
@@ -163,16 +164,19 @@ public final class Analyzer implements Ast.Visitor<Ast> {
         String name = ast.getName();
         int arity = ast.getArguments().size();
         Stdlib.Function func =  Stdlib.getFunction(name,arity);
+        Ast.Expression temp = ast;
         if(func != null){
+            List<Ast.Expression> visitedArgs = new ArrayList<Ast.Expression>();
             List<Stdlib.Type> parameterTypes = func.getParameterTypes();
             for(int i = 0; i < ast.getArguments().size(); i++){
-                visit(ast.getArguments().get(i));
+                temp = visit(ast.getArguments().get(i));
+                visitedArgs.add(temp);
             }
             for(int j = 0; j < parameterTypes.size(); j++){
 
-                checkAssignable(ast.getArguments().get(j).getType(),parameterTypes.get(j));
+                checkAssignable(visitedArgs.get(j).getType(),parameterTypes.get(j));
             }
-            return new Ast.Expression.Function(func.getReturnType(),func.getJvmName(), ast.getArguments());
+            return new Ast.Expression.Function(func.getReturnType(),func.getJvmName(), visitedArgs);
         }else throw new AnalysisException("The function has not been defined");
 
     }
