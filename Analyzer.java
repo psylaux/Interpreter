@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -47,7 +48,8 @@ public final class Analyzer implements Ast.Visitor<Ast> {
 
     @Override
     public Ast.Statement.Declaration visit(Ast.Statement.Declaration ast) throws AnalysisException {
-       
+
+        Optional<Ast.Expression> val = Optional.empty();
         Stdlib.Type leftType = Stdlib.getType(ast.getType());
 
         if (leftType.equals(Stdlib.Type.VOID)) {
@@ -56,14 +58,14 @@ public final class Analyzer implements Ast.Visitor<Ast> {
         scope.define(ast.getName(), leftType);
 
         if(ast.getValue().isPresent()) {
-            Stdlib.Type rightType = visit(ast.getValue().get()).type;
+            Ast.Expression value = visit(ast.getValue().get());
+            Stdlib.Type rightType = value.getType();
             checkAssignable(leftType, rightType);
             visit(new Ast.Statement.Assignment(ast.getName(), ast.getValue().get()));
+            val = Optional.of(value);
         }
-
-        //ast.getValue type == null instead of rightType... How to set rightType to ast.value????
-
-        return new Ast.Statement.Declaration(ast.getName(), leftType.getJvmName(), ast.getValue());
+        
+        return new Ast.Statement.Declaration(ast.getName(), leftType.getJvmName(), val); 
 
     }
 
@@ -73,7 +75,7 @@ public final class Analyzer implements Ast.Visitor<Ast> {
         Ast.Expression expression = visit(ast.getExpression());
 
         Stdlib.Type leftType = scope.lookup(ast.getName());
-        Stdlib.Type rightType = expression.type;
+        Stdlib.Type rightType = expression.getType();
         checkAssignable(leftType, rightType);
 
         return new Ast.Statement.Assignment(ast.getName(), expression);
@@ -82,22 +84,25 @@ public final class Analyzer implements Ast.Visitor<Ast> {
 
     @Override
     public Ast.Statement.If visit(Ast.Statement.If ast) throws AnalysisException {
-   
+
         Ast.Expression expression = visit(ast.getCondition());
+        List<Ast.Statement> thenStatements = new ArrayList<>();
+        List<Ast.Statement> elseStatements = new ArrayList<>();
+
         for (int i = 0; i < ast.getThenStatements().size(); i++) {
-           visit(ast.getThenStatements().get(i));
+           thenStatements.add(visit(ast.getThenStatements().get(i)));
         }
 
         for (int i = 0; i < ast.getElseStatements().size(); i++) {
-           visit(ast.getElseStatements().get(i));
+          elseStatements.add(visit(ast.getElseStatements().get(i)));
         }
 
-        if (expression.type != Stdlib.Type.BOOLEAN) {
+        if (expression.getType() != Stdlib.Type.BOOLEAN) {
             throw new AnalysisException("Condition must be of Boolean type");
         } else if (ast.getThenStatements().size() == 0) {
             throw new AnalysisException("Statements list is empty");
         } else {
-            return new Ast.Statement.If(expression, ast.getThenStatements(), ast.getElseStatements());
+            return new Ast.Statement.If(expression, thenStatements, elseStatements);
         }
     }
 
@@ -105,12 +110,13 @@ public final class Analyzer implements Ast.Visitor<Ast> {
     public Ast.Statement.While visit(Ast.Statement.While ast) throws AnalysisException {
 
         Ast.Expression expression = visit(ast.getCondition());
+        List<Ast.Statement> statements = new ArrayList<>();
         for (int i = 0; i < ast.getStatements().size(); i++) {
-           visit(ast.getStatements().get(i));
+           statements.add(visit(ast.getStatements().get(i)));
         }
 
-        if (expression.type.equals(Stdlib.Type.BOOLEAN)) {
-            return new Ast.Statement.While(ast.getCondition(), ast.getStatements());
+        if (expression.getType().equals(Stdlib.Type.BOOLEAN)) {
+            return new Ast.Statement.While(expression, statements);
         }
 
         throw new AnalysisException("Condition must be of Boolean type");
