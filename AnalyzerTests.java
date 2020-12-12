@@ -22,6 +22,35 @@ import java.util.stream.Stream;
  */
 public final class AnalyzerTests {
 
+
+//    @ParameterizedTest(name = "{0}")
+//    @MethodSource
+//    public void testExpression(String test, Ast.Expression.Function ast, Ast.Expression.Function expected) {
+//        test(ast, expected, Collections.emptyMap());
+//    }
+//
+//    public static Stream<Arguments> testExpression() {
+//        return Stream.of(
+//                Arguments.of("2+2",
+//                        new Ast.Expression.Function("2+2", Arrays.asList(
+//                                new Ast.Expression.Literal("string")
+//                        )),
+//                        new Ast.Expression.Function(Stdlib.Type.VOID, "System.out.println", Arrays.asList(
+//                                new Ast.Expression.Literal(Stdlib.Type.STRING, "string")
+//                        ))
+//                ),
+//                Arguments.of("Print Multiple Arguments",
+//                        new Ast.Expression.Function("PRINT", Arrays.asList(
+//                                new Ast.Expression.Literal("a"),
+//                                new Ast.Expression.Literal("b"),
+//                                new Ast.Expression.Literal("c")
+//                        )),
+//                        null
+//                )
+//        );
+//    }
+
+
     @ParameterizedTest(name = "{0}")
     @MethodSource
     public void testDeclarationStatement(String test, Ast.Statement.Declaration ast, Ast.Statement.Declaration expected) {
@@ -42,6 +71,61 @@ public final class AnalyzerTests {
                                 Optional.of(new Ast.Expression.Literal("string"))),
                         new Ast.Statement.Declaration("y", "String",
                                 Optional.of(new Ast.Expression.Literal(Stdlib.Type.STRING, "string")))
+                ),
+                Arguments.of("Define Integer",
+                        new Ast.Statement.Declaration("z", "INTEGER",
+                                Optional.of(new Ast.Expression.Literal(BigInteger.valueOf(23)))),
+                        new Ast.Statement.Declaration("z", "int",
+                                Optional.of(new Ast.Expression.Literal(Stdlib.Type.INTEGER, 23)))
+                ),
+                Arguments.of("Define Decimal",
+                        new Ast.Statement.Declaration("a", "DECIMAL",
+                                Optional.of( new Ast.Expression.Literal(BigDecimal.valueOf(15.834)))),
+                        new Ast.Statement.Declaration("a", "double",
+                                Optional.of(new Ast.Expression.Literal(Stdlib.Type.DECIMAL,15.834)))
+                ),
+                Arguments.of("Already Defined",
+                        new Ast.Statement.Declaration("x", "STRING",
+                                Optional.of(new Ast.Expression.Literal("x again?"))),
+                        null
+                ),
+                Arguments.of("Void",
+                        new Ast.Statement.Declaration("ono", null,
+                                Optional.of(new Ast.Expression.Literal("string"))),
+                        null
+                ),
+                Arguments.of("Incompatible",
+                        new Ast.Statement.Declaration("incompatible", "INTEGER",
+                                Optional.of(new Ast.Expression.Literal("string"))),
+                        null
+                )
+        );
+    }
+
+
+    @ParameterizedTest(name = "{0}")
+    @MethodSource
+    public void testAssignmentStatement(String test, Ast.Statement.Assignment ast, Ast.Statement.Assignment expected) {
+        Analyzer analyzer = test(ast, expected, Collections.emptyMap());
+    }
+
+    public static Stream<Arguments> testAssignmentStatement() {
+        return Stream.of(
+                Arguments.of("(boolean) x = true",
+                        new Ast.Statement.Assignment("x", new Ast.Expression.Literal(true)),
+                        new Ast.Statement.Assignment("x", new Ast.Expression.Literal(Stdlib.Type.BOOLEAN, true))
+                ),
+                Arguments.of("(boolean) x = 23",
+                        new Ast.Statement.Assignment("x", new Ast.Expression.Literal(BigInteger.valueOf(23))),
+                        null
+                ),
+                Arguments.of("(int) y = true",
+                        new Ast.Statement.Assignment("y", new Ast.Expression.Literal(true)),
+                        null
+                ),
+                Arguments.of("undefine = true",
+                        new Ast.Statement.Assignment("undefine", new Ast.Expression.Literal(true)),
+                        null
                 )
         );
     }
@@ -101,6 +185,55 @@ public final class AnalyzerTests {
 
     @ParameterizedTest(name = "{0}")
     @MethodSource
+    public void testWhileStatement(String test, Ast.Statement.While ast, Ast.Statement.While expected) {
+        test(ast, expected, Collections.emptyMap());
+    }
+
+    public static Stream<Arguments> testWhileStatement() {
+        return Stream.of(
+                Arguments.of("Valid Condition",
+                        new Ast.Statement.While(
+                                new Ast.Expression.Literal(Boolean.TRUE),
+                                Arrays.asList(
+                                        new Ast.Statement.Expression(new Ast.Expression.Function("PRINT", Arrays.asList(
+                                                new Ast.Expression.Literal("string")
+                                        )))
+                                )
+                        ),
+                        new Ast.Statement.While(
+                                new Ast.Expression.Literal(Stdlib.Type.BOOLEAN, Boolean.TRUE),
+                                Arrays.asList(
+                                        new Ast.Statement.Expression(new Ast.Expression.Function(Stdlib.Type.VOID, "System.out.println", Arrays.asList(
+                                                new Ast.Expression.Literal(Stdlib.Type.STRING, "string")
+                                        )))
+                                )
+                        )
+                ),
+                Arguments.of("Invalid Condition",
+                        new Ast.Statement.While(
+                                new Ast.Expression.Literal("false"),
+                                Arrays.asList(
+                                        new Ast.Statement.Expression(new Ast.Expression.Function("PRINT", Arrays.asList(
+                                                new Ast.Expression.Literal("string")
+                                        )))
+                                )
+                        ),
+                        null
+                ),
+                Arguments.of("Invalid Statement",
+                        new Ast.Statement.While(
+                                new Ast.Expression.Literal(Boolean.TRUE),
+                                Arrays.asList(
+                                        new Ast.Statement.Expression(new Ast.Expression.Literal("string"))
+                                )
+                        ),
+                        null
+                )
+        );
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @MethodSource
     public void testLiteralExpression(String test, Ast.Expression.Literal ast, Ast.Expression.Literal expected) {
         test(ast, expected, Collections.emptyMap());
     }
@@ -131,7 +264,7 @@ public final class AnalyzerTests {
 //                        new Ast.Expression.Literal(Stdlib.Type.STRING, " John012!?.+-/* ")
 
 //                ),
-        Arguments.of("Decimal valid",
+                Arguments.of("Decimal valid",
                         new Ast.Expression.Literal(BigDecimal.valueOf(15.834)),
                         new Ast.Expression.Literal(Stdlib.Type.DECIMAL,15.834)
 
