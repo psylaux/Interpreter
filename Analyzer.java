@@ -37,27 +37,84 @@ public final class Analyzer implements Ast.Visitor<Ast> {
 
     @Override
     public Ast.Statement.Expression visit(Ast.Statement.Expression ast) throws AnalysisException {
-        throw new UnsupportedOperationException(); //TODO
+        Ast.Expression expression = visit(ast.getExpression());
+        if (expression instanceof Ast.Expression.Function) {
+            return new Ast.Statement.Expression(expression);
+        }
+        throw new AnalysisException("not an Ast.Expression.Function");
+
     }
 
     @Override
     public Ast.Statement.Declaration visit(Ast.Statement.Declaration ast) throws AnalysisException {
-        throw new UnsupportedOperationException(); //TODO
+       
+        Stdlib.Type leftType = Stdlib.getType(ast.getType());
+
+        if (leftType.equals(Stdlib.Type.VOID)) {
+            throw new AnalysisException("Type of variable cannot be Void");
+        }
+        scope.define(ast.getName(), leftType);
+
+        if(ast.getValue().isPresent()) {
+            Stdlib.Type rightType = visit(ast.getValue().get()).type;
+            checkAssignable(leftType, rightType);
+            visit(new Ast.Statement.Assignment(ast.getName(), ast.getValue().get()));
+        }
+
+        //ast.getValue type == null instead of rightType... How to set rightType to ast.value????
+
+        return new Ast.Statement.Declaration(ast.getName(), leftType.getJvmName(), ast.getValue());
+
     }
 
     @Override
     public Ast.Statement.Assignment visit(Ast.Statement.Assignment ast) throws AnalysisException {
-        throw new UnsupportedOperationException(); //TODO
+
+        Ast.Expression expression = visit(ast.getExpression());
+
+        Stdlib.Type leftType = scope.lookup(ast.getName());
+        Stdlib.Type rightType = expression.type;
+        checkAssignable(leftType, rightType);
+
+        return new Ast.Statement.Assignment(ast.getName(), expression);
+
     }
 
     @Override
     public Ast.Statement.If visit(Ast.Statement.If ast) throws AnalysisException {
-        throw new UnsupportedOperationException(); //TODO
+   
+        Ast.Expression expression = visit(ast.getCondition());
+        for (int i = 0; i < ast.getThenStatements().size(); i++) {
+           visit(ast.getThenStatements().get(i));
+        }
+
+        for (int i = 0; i < ast.getElseStatements().size(); i++) {
+           visit(ast.getElseStatements().get(i));
+        }
+
+        if (expression.type != Stdlib.Type.BOOLEAN) {
+            throw new AnalysisException("Condition must be of Boolean type");
+        } else if (ast.getThenStatements().size() == 0) {
+            throw new AnalysisException("Statements list is empty");
+        } else {
+            return new Ast.Statement.If(expression, ast.getThenStatements(), ast.getElseStatements());
+        }
     }
 
     @Override
     public Ast.Statement.While visit(Ast.Statement.While ast) throws AnalysisException {
-        throw new UnsupportedOperationException(); //TODO
+
+        Ast.Expression expression = visit(ast.getCondition());
+        for (int i = 0; i < ast.getStatements().size(); i++) {
+           visit(ast.getStatements().get(i));
+        }
+
+        if (expression.type.equals(Stdlib.Type.BOOLEAN)) {
+            return new Ast.Statement.While(ast.getCondition(), ast.getStatements());
+        }
+
+        throw new AnalysisException("Condition must be of Boolean type");
+
     }
 
     /**
@@ -144,19 +201,19 @@ public final class Analyzer implements Ast.Visitor<Ast> {
 
     @Override
     public Ast.Expression.Variable visit(Ast.Expression.Variable ast) throws AnalysisException {
-         if(scope.lookup(ast.getName()) == null){
-             throw new AnalysisException("The variable is not defined");
-         }else{
-             if((Object) scope.lookup(ast.getName()) instanceof Boolean){
-                 return new Ast.Expression.Variable(Stdlib.Type.BOOLEAN,ast.getName());
-             }else if((Object) scope.lookup(ast.getName()) instanceof Integer){
-                 return new Ast.Expression.Variable(Stdlib.Type.INTEGER,ast.getName());
-             }else if((Object) scope.lookup(ast.getName()) instanceof Double){
-                 return new Ast.Expression.Variable(Stdlib.Type.DECIMAL,ast.getName());
-             }else if((Object) scope.lookup(ast.getName()) instanceof String){
-                     return new Ast.Expression.Variable(Stdlib.Type.STRING,ast.getName());
-             } else throw new AnalysisException("The variable is not of the desired type");
-         }
+        if(scope.lookup(ast.getName()) == null){
+            throw new AnalysisException("The variable is not defined");
+        }else{
+            if((Object) scope.lookup(ast.getName()) instanceof Boolean){
+                return new Ast.Expression.Variable(Stdlib.Type.BOOLEAN,ast.getName());
+            }else if((Object) scope.lookup(ast.getName()) instanceof Integer){
+                return new Ast.Expression.Variable(Stdlib.Type.INTEGER,ast.getName());
+            }else if((Object) scope.lookup(ast.getName()) instanceof Double){
+                return new Ast.Expression.Variable(Stdlib.Type.DECIMAL,ast.getName());
+            }else if((Object) scope.lookup(ast.getName()) instanceof String){
+                return new Ast.Expression.Variable(Stdlib.Type.STRING,ast.getName());
+            } else throw new AnalysisException("The variable is not of the desired type");
+        }
     }
 
     @Override
